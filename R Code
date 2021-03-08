@@ -1,0 +1,186 @@
+library(tseries)
+library(lmtest)
+
+require(sandwich)
+require(lmtest)
+
+# Import data into R studio
+
+# Isolate violent crime rate variable and make it time series
+CrimeRate = Crime_Data_2[, 4]
+tsRate = ts(CrimeRate, start = 1990, end = 2009, frequency = 1 )
+tsData = ts(tsRate, start = c(1990,1), end = c(2009, 1), frequency = 1)
+
+plot((tsData),main = "Violent Crime Rate in the United States from 1990 t0 2009",
+     ylab = "Violent Crime Rate Per 100,000 Inhabitants",
+     col = "steelblue", lwd = 2)
+
+# Linear Deterministic Model 
+model1 = lm(tsData~time(tsData))
+summary(model1)
+
+# Plot Residuals 
+ResidMod1 = ts(resid(model1))
+plot(ResidMod1, ylab = "Residuals", main = "Residual Plot for Linearly Detrended Model")
+abline(h=0, lty=2)
+
+# Plot the linear trend
+plot(fittedMod1, main = "Plot of Linear Trend Model", ylab = "Violent Crime Rate per 100,000 inhabitants")
+
+# Use par for comparison of 2 of the plots above 
+par(mfrow=c(1,2))
+plot(fittedMod1, main = "Plot of Linear Trend Model", ylab = "Violent Crime Rate per 100,000 inhabitants")
+plot((tsData),main = "Violent Crime Rate in the United States from 1990 t0 2009",
+     ylab = "Violent Crime Rate Per 100,000 Inhabitants",
+     col = "steelblue", lwd = 2)
+
+# Plot Standard Residuals 
+plot(rstandard(model1), type = 'l', ylab = "Standardized Residual Values",
+     main = "Standard Residual Plot for Linearly Detrended Model")
+abline(h=0, lty=2)
+
+# QQ plot  
+qqnorm(ResidMod1)
+qqline(ResidMod1)
+
+# Shapiro Wilk and runs test 
+shapiro.test(ResidMod1)
+runs(ResidMod1)
+
+# ACF Plot for checking independence 
+acf(ResidMod1, main = "ACF Plot of Residuals for Linearly Detrended Model")
+
+# HAC test 
+coeftest(model1, vcov=vcovHAC(model1))
+
+# Determine d (order of integration)
+plot(ResidMod1)
+acf(ResidMod1)
+adf.test(ResidMod1)
+pp.test(ResidMod1)
+
+# Take 1st Difference 
+adf.test(diff(ResidMod1))
+pp.test(diff(ResidMod1))
+
+# Second Difference Taken for Comparison But Not Used 
+adf.test(diff(diff(ResidMod1)))
+pp.test(diff(diff(ResidMod1)))
+
+# Use par for comparison of plots
+par(mfrow=c(1,2))
+acf(diff(ResidMod1),  main = "ACF Plot for Model with 1st Difference Taken of Residuals")
+pacf(diff(ResidMod1),  main = "PACF Plot for Model with 1st Difference Taken of Residuals")
+
+# Use par to compare two of the plots given above
+par(mfrow=c(1,2))
+acf(diff(ResidMod1),  main = "ACF Plot for Model with 1st Difference Taken of Residuals")
+acf(ResidMod1, main = "ACF Plot of Residuals for Linearly Detrended Model")
+
+# Figure out p and q
+library(forecast)
+auto.arima(ResidMod1)
+
+#Fi ARIMA Models with d = 1 
+fitARIMA110 <- arima(ResidMod1, order=c(1,1,0), include.mean=F)
+
+fitARIMA011 <- arima(ResidMod1, order=c(0,1,1), include.mean=F)
+
+fitARIMA111 <- arima(ResidMod1, order=c(1,1,1), include.mean=F)
+
+fitARIMA210 <- arima(ResidMod1, order=c(2,1,0), include.mean=F)
+
+fitARIMA211 <- arima(ResidMod1, order=c(2,1,1), include.mean=F)
+
+fitARIMA212 <- arima(ResidMod1, order=c(2,1,2), include.mean=F)
+
+fitARIMA012 <- arima(ResidMod1, order=c(0,1,2), include.mean=F)
+
+fitARIMA112 <- arima(ResidMod1, order=c(1,1,2), include.mean=F)
+
+fitARIMA110 # Second Best Model 
+fitARIMA011
+fitARIMA111
+fitARIMA210
+fitARIMA211 # Best Model 
+fitARIMA212
+fitARIMA012
+fitARIMA112
+
+# Create data frame of AIC values
+attributes(fitARIMA110)
+Process = c("ARIMA110", "ARIMA011", "ARIMA111", "ARIMA210"
+             , "ARIMA211", "ARIMA212", "ARIMA012",
+             "ARIMA112")
+AIC_Value = c(fitARIMA110$aic, fitARIMA011$aic, 
+              fitARIMA111$aic, fitARIMA210$aic, 
+              fitARIMA211$aic, fitARIMA212$aic, 
+              fitARIMA012$aic, fitARIMA112$aic)
+data.frame(Process, AIC_Value)
+
+#Fit ARIMA Models with d = 0 
+fitARIMA100 <- arima(ResidMod1, order=c(1,0,0), include.mean=F)
+
+fitARIMA001 <- arima(ResidMod1, order=c(0,0,1), include.mean=F)
+
+fitARIMA101 <- arima(ResidMod1, order=c(1,0,1), include.mean=F)
+
+fitARIMA200 <- arima(ResidMod1, order=c(2,0,0), include.mean=F)
+
+fitARIMA201 <- arima(ResidMod1, order=c(2,0,1), include.mean=F)
+
+fitARIMA202 <- arima(ResidMod1, order=c(2,0,2), include.mean=F)
+
+fitARIMA002 <- arima(ResidMod1, order=c(0,0,2), include.mean=F)
+
+fitARIMA102 <- arima(ResidMod1, order=c(1,0,2), include.mean=F)
+
+fitARIMA100 
+fitARIMA001
+fitARIMA101
+fitARIMA200 # Best Model
+fitARIMA201  
+fitARIMA202
+fitARIMA002
+fitARIMA102
+
+# Create data frame of AIC values
+Process2 = c("ARIMA100", "ARIMA001", "ARIMA101", "ARIMA200"
+            , "ARIMA201", "ARIMA202", "ARIMA002",
+            "ARIMA102")
+AIC_Value2 = c(fitARIMA100$aic, fitARIMA001$aic, 
+              fitARIMA101$aic, fitARIMA200$aic, 
+              fitARIMA201$aic, fitARIMA202$aic, 
+              fitARIMA002$aic, fitARIMA102$aic)
+data.frame(Process2, AIC_Value2)
+
+# Forecast  
+mymodel = auto.arima(ResidMod1)
+mymodel
+
+myforecast = forecast(mymodel, level = c(95))
+plot(myforecast)
+
+mymodel2 = auto.arima(tsData)
+mymodel2
+
+myforecast2 = forecast(mymodel2, level = c(95))
+plot(myforecast2)
+
+mymodel3 = auto.arima(tsData, d=1)
+mymodel3
+
+myforecast3 = forecast(mymodel3, level = c(95), h=16)
+plot(myforecast3, xlab = "Time (Years)", ylab = "Violent Crime Rate Per 
+     100,000 Inhabitants", main = "16 Year Forecast Using ARIMA(1,1,0) Model")
+
+# Check if stationary 
+ResidMod3 = resid(mymodel3)
+pp.test(ResidMod3)
+adf.test(ResidMod3)
+
+tsdiag(mymodel3)
+
+attributes(myforecast)
+myforecast3$mean
+myforecast3$mean[10]
