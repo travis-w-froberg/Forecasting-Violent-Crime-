@@ -1,1 +1,2 @@
 # Forecasting-Violent-Crime-
+Various models were used to forecast violent crime rate in the United States from 2010-2025. The raw data was transformed into time series data. One dependent variable (violent crime rate in the U.S. from 1990-2009) was used. An ARIMA(1,1,0) model was found to have the best performance based on AIC values for each model. Predicting the violent crime rate can be useful in determing federal, state, and city budjets for crime prevention. 
