@@ -1,17 +1,25 @@
+install.packages("aTSA")
+
+# You may need to install more packages before calling them with library(). Some of these 
+# packages were previously installed on my system. 
 library(tseries)
 library(lmtest)
+library(aTSA)
+library(forecast)
 
 require(sandwich)
 require(lmtest)
 
-# Import data into R studio
+# Import data into R studio (this code will vary depending on where the file is saved on your PC)
+Crime_Data_2 <- read.csv(file = "Crime_Data_2.csv")
+View(Crime_Data_2)
 
 # Isolate violent crime rate variable and make it time series
 CrimeRate = Crime_Data_2[, 4]
-tsRate = ts(CrimeRate, start = 1990, end = 2009, frequency = 1 )
+tsRate = ts(CrimeRate, start = 1990, end = 2009, frequency = 1)
 tsData = ts(tsRate, start = c(1990,1), end = c(2009, 1), frequency = 1)
 
-plot((tsData),main = "Violent Crime Rate in the United States from 1990 t0 2009",
+plot((tsData), main = "Violent Crime Rate in the United States from 1990 t0 2009",
      ylab = "Violent Crime Rate Per 100,000 Inhabitants",
      col = "steelblue", lwd = 2)
 
@@ -24,16 +32,6 @@ ResidMod1 = ts(resid(model1))
 plot(ResidMod1, ylab = "Residuals", main = "Residual Plot for Linearly Detrended Model")
 abline(h=0, lty=2)
 
-# Plot the linear trend
-plot(fittedMod1, main = "Plot of Linear Trend Model", ylab = "Violent Crime Rate per 100,000 inhabitants")
-
-# Use par for comparison of 2 of the plots above 
-par(mfrow=c(1,2))
-plot(fittedMod1, main = "Plot of Linear Trend Model", ylab = "Violent Crime Rate per 100,000 inhabitants")
-plot((tsData),main = "Violent Crime Rate in the United States from 1990 t0 2009",
-     ylab = "Violent Crime Rate Per 100,000 Inhabitants",
-     col = "steelblue", lwd = 2)
-
 # Plot Standard Residuals 
 plot(rstandard(model1), type = 'l', ylab = "Standardized Residual Values",
      main = "Standard Residual Plot for Linearly Detrended Model")
@@ -43,15 +41,11 @@ abline(h=0, lty=2)
 qqnorm(ResidMod1)
 qqline(ResidMod1)
 
-# Shapiro Wilk and runs test 
+# Shapiro Wilk Test
 shapiro.test(ResidMod1)
-runs(ResidMod1)
 
 # ACF Plot for checking independence 
 acf(ResidMod1, main = "ACF Plot of Residuals for Linearly Detrended Model")
-
-# HAC test 
-coeftest(model1, vcov=vcovHAC(model1))
 
 # Determine d (order of integration)
 plot(ResidMod1)
@@ -67,18 +61,7 @@ pp.test(diff(ResidMod1))
 adf.test(diff(diff(ResidMod1)))
 pp.test(diff(diff(ResidMod1)))
 
-# Use par for comparison of plots
-par(mfrow=c(1,2))
-acf(diff(ResidMod1),  main = "ACF Plot for Model with 1st Difference Taken of Residuals")
-pacf(diff(ResidMod1),  main = "PACF Plot for Model with 1st Difference Taken of Residuals")
-
-# Use par to compare two of the plots given above
-par(mfrow=c(1,2))
-acf(diff(ResidMod1),  main = "ACF Plot for Model with 1st Difference Taken of Residuals")
-acf(ResidMod1, main = "ACF Plot of Residuals for Linearly Detrended Model")
-
 # Figure out p and q
-library(forecast)
 auto.arima(ResidMod1)
 
 #Fi ARIMA Models with d = 1 
@@ -110,8 +93,8 @@ fitARIMA112
 # Create data frame of AIC values
 attributes(fitARIMA110)
 Process = c("ARIMA110", "ARIMA011", "ARIMA111", "ARIMA210"
-             , "ARIMA211", "ARIMA212", "ARIMA012",
-             "ARIMA112")
+            , "ARIMA211", "ARIMA212", "ARIMA012",
+            "ARIMA112")
 AIC_Value = c(fitARIMA110$aic, fitARIMA011$aic, 
               fitARIMA111$aic, fitARIMA210$aic, 
               fitARIMA211$aic, fitARIMA212$aic, 
@@ -146,12 +129,12 @@ fitARIMA102
 
 # Create data frame of AIC values
 Process2 = c("ARIMA100", "ARIMA001", "ARIMA101", "ARIMA200"
-            , "ARIMA201", "ARIMA202", "ARIMA002",
-            "ARIMA102")
+             , "ARIMA201", "ARIMA202", "ARIMA002",
+             "ARIMA102")
 AIC_Value2 = c(fitARIMA100$aic, fitARIMA001$aic, 
-              fitARIMA101$aic, fitARIMA200$aic, 
-              fitARIMA201$aic, fitARIMA202$aic, 
-              fitARIMA002$aic, fitARIMA102$aic)
+               fitARIMA101$aic, fitARIMA200$aic, 
+               fitARIMA201$aic, fitARIMA202$aic, 
+               fitARIMA002$aic, fitARIMA102$aic)
 data.frame(Process2, AIC_Value2)
 
 # Forecast  
@@ -184,3 +167,4 @@ tsdiag(mymodel3)
 attributes(myforecast)
 myforecast3$mean
 myforecast3$mean[10]
+
